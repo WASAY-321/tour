@@ -1,20 +1,9 @@
-<?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-if(!isset($_SESSION['admin'])){
-    header("Location: admin-login.php");
-    exit;
-}
-
-$adminName = $_SESSION['admin'];
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo isset($pageTitle) ? $pageTitle : "Admin Panel"; ?> - GreenTour</title>
+    <title>Admin Panel - GreenTour</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* Admin Header Specific Styles - Scoped to prevent conflicts */
@@ -29,8 +18,8 @@ $adminName = $_SESSION['admin'];
             --white: #ffffff;
             --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.08);
-            --transition: all 0.3s ease;
-            --sidebar-width: 250px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --sidebar-width: 280px;
             --sidebar-collapsed-width: 70px;
         }
         
@@ -101,6 +90,7 @@ $adminName = $_SESSION['admin'];
         
         .admin-logo i { 
             font-size: 24px; 
+            transition: var(--transition);
         }
         
         .admin-logo-text { 
@@ -111,7 +101,9 @@ $adminName = $_SESSION['admin'];
         }
         
         .admin-sidebar.collapsed .admin-logo-text { 
-            display: none; 
+            opacity: 0;
+            width: 0;
+            overflow: hidden;
         }
         
         .admin-toggle-btn { 
@@ -123,10 +115,16 @@ $adminName = $_SESSION['admin'];
             transition: var(--transition); 
             padding: 5px; 
             border-radius: 4px; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
         }
         
         .admin-toggle-btn:hover { 
             background: rgba(255, 255, 255, 0.1); 
+            transform: rotate(180deg);
         }
         
         .admin-sidebar.collapsed .admin-toggle-btn { 
@@ -146,6 +144,23 @@ $adminName = $_SESSION['admin'];
             transition: var(--transition); 
             border-left: 3px solid transparent; 
             white-space: nowrap;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .admin-menu-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .admin-menu-item:hover::before {
+            left: 100%;
         }
         
         .admin-menu-item i { 
@@ -153,6 +168,7 @@ $adminName = $_SESSION['admin'];
             font-size: 16px; 
             width: 20px; 
             text-align: center; 
+            transition: var(--transition);
         }
         
         .admin-menu-item.active, 
@@ -162,7 +178,9 @@ $adminName = $_SESSION['admin'];
         }
         
         .admin-sidebar.collapsed .admin-menu-item span { 
-            display: none; 
+            opacity: 0;
+            width: 0;
+            overflow: hidden;
         }
         
         .admin-sidebar.collapsed .admin-menu-item { 
@@ -172,6 +190,105 @@ $adminName = $_SESSION['admin'];
         
         .admin-sidebar.collapsed .admin-menu-item i { 
             margin-right: 0; 
+            transform: scale(1.2);
+        }
+
+        /* Submenu Styles */
+        .admin-menu-item.has-submenu {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .admin-menu-item.has-submenu > .submenu-arrow {
+            margin-left: auto;
+            transition: transform 0.3s ease;
+            font-size: 12px;
+        }
+
+     
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .admin-submenu a {
+            padding: 10px 20px 10px 50px;
+            display: block;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .admin-submenu a::before {
+            content: '';
+            position: absolute;
+            left: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+
+        .admin-submenu a.active,
+        .admin-submenu a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-left: 3px solid var(--white);
+            padding-left: 55px;
+        }
+
+        .admin-submenu a.active::before,
+        .admin-submenu a:hover::before {
+            background: var(--white);
+            transform: translateY(-50%) scale(1.2);
+        }
+
+        .admin-menu-item.has-submenu.active > .submenu-arrow {
+            transform: rotate(180deg);
+        }
+
+        .admin-menu-item.has-submenu.active .admin-submenu {
+            display: flex;
+        }
+
+        .admin-sidebar.collapsed .admin-submenu {
+            position: absolute;
+            left: 100%;
+            top: 0;
+            width: 200px;
+            background: var(--primary-dark);
+            border-radius: 0 8px 8px 0;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+            z-index: 1001;
+        }
+
+        .admin-sidebar.collapsed .admin-menu-item.has-submenu:hover .admin-submenu {
+            display: flex;
+        }
+
+        .admin-sidebar.collapsed .admin-submenu a {
+            padding-left: 20px;
+        }
+
+        .admin-sidebar.collapsed .admin-submenu a::before {
+            left: 8px;
+        }
+
+        .admin-sidebar.collapsed .admin-submenu a.active,
+        .admin-sidebar.collapsed .admin-submenu a:hover {
+            padding-left: 25px;
         }
 
         /* Main Content */
@@ -199,6 +316,18 @@ $adminName = $_SESSION['admin'];
             border-radius: 10px; 
             box-shadow: var(--shadow-light); 
             margin-bottom: 25px; 
+            animation: slideInDown 0.5s ease-out;
+        }
+        
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
         .admin-topbar h1 { 
@@ -225,6 +354,12 @@ $adminName = $_SESSION['admin'];
             color: var(--white); 
             font-weight: bold; 
             box-shadow: var(--shadow-light); 
+            transition: var(--transition);
+        }
+        
+        .admin-user-avatar:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
         
         .admin-logout-btn { 
@@ -245,6 +380,7 @@ $adminName = $_SESSION['admin'];
         .admin-logout-btn:hover { 
             background: var(--primary-dark); 
             transform: translateY(-2px); 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
 
         /* Mobile Toggle Button */
@@ -270,15 +406,17 @@ $adminName = $_SESSION['admin'];
             height: 18px;
             position: relative;
             cursor: pointer;
+            transform: rotate(0deg);
+            transition: .5s ease-in-out;
         }
 
         .admin-hamburger span {
             display: block;
             position: absolute;
-            height: 2px;
+            height: 3px;
             width: 100%;
             background: var(--primary-color);
-            border-radius: 2px;
+            border-radius: 3px;
             opacity: 1;
             left: 0;
             transform: rotate(0deg);
@@ -287,35 +425,34 @@ $adminName = $_SESSION['admin'];
 
         .admin-hamburger span:nth-child(1) {
             top: 0px;
+            transform-origin: left center;
         }
 
-        .admin-hamburger span:nth-child(2),
-        .admin-hamburger span:nth-child(3) {
+        .admin-hamburger span:nth-child(2) {
             top: 8px;
+            transform-origin: left center;
         }
 
-        .admin-hamburger span:nth-child(4) {
+        .admin-hamburger span:nth-child(3) {
             top: 16px;
+            transform-origin: left center;
         }
 
         .admin-hamburger.active span:nth-child(1) {
-            top: 8px;
-            width: 0%;
-            left: 50%;
+            transform: rotate(45deg);
+            top: -1px;
+            left: 4px;
         }
 
         .admin-hamburger.active span:nth-child(2) {
-            transform: rotate(45deg);
+            width: 0%;
+            opacity: 0;
         }
 
         .admin-hamburger.active span:nth-child(3) {
             transform: rotate(-45deg);
-        }
-
-        .admin-hamburger.active span:nth-child(4) {
-            top: 8px;
-            width: 0%;
-            left: 50%;
+            top: 17px;
+            left: 4px;
         }
 
         /* Breadcrumb */
@@ -327,15 +464,30 @@ $adminName = $_SESSION['admin'];
             margin-bottom: 20px; 
             font-size: 14px; 
             color: var(--text-light); 
+            animation: fadeIn 0.5s ease-out 0.2s both;
         }
         
         .admin-breadcrumb a { 
             color: var(--primary-color); 
             text-decoration: none; 
+            transition: var(--transition);
+            position: relative;
         }
         
         .admin-breadcrumb a:hover { 
+            color: var(--primary-dark);
             text-decoration: underline; 
+        }
+        
+        .admin-breadcrumb a::after {
+            content: '›';
+            margin: 0 8px;
+            color: var(--text-light);
+        }
+        
+        .admin-breadcrumb span:last-child {
+            color: var(--primary-dark);
+            font-weight: 500;
         }
 
         .admin-content-area { 
@@ -344,6 +496,23 @@ $adminName = $_SESSION['admin'];
             padding: 25px; 
             box-shadow: var(--shadow-light); 
             min-height: 400px; 
+            animation: fadeInUp 0.5s ease-out 0.3s both;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         /* Responsive Design */
@@ -353,7 +522,9 @@ $adminName = $_SESSION['admin'];
             }
             .admin-sidebar .admin-logo-text,
             .admin-sidebar .admin-menu-item span {
-                display: none;
+                opacity: 0;
+                width: 0;
+                overflow: hidden;
             }
             .admin-sidebar .admin-menu-item {
                 justify-content: center;
@@ -361,6 +532,7 @@ $adminName = $_SESSION['admin'];
             }
             .admin-sidebar .admin-menu-item i {
                 margin-right: 0;
+                transform: scale(1.2);
             }
             .admin-main-content {
                 margin-left: var(--sidebar-collapsed-width);
@@ -521,42 +693,116 @@ $adminName = $_SESSION['admin'];
         </button>
     </div>
     <div class="admin-menu">
-        <a href="dashboard.php" class="admin-menu-item <?php echo basename($_SERVER['PHP_SELF']) == 'dashboard.php' ? 'active' : ''; ?>">
+        <a href="dashboard.php" class="admin-menu-item active">
             <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
         </a>
-        <a href="manage-users.php" class="admin-menu-item <?php echo basename($_SERVER['PHP_SELF']) == 'manage-users.php' ? 'active' : ''; ?>">
+
+        <!-- Users -->
+        <div class="admin-menu-item has-submenu">
             <i class="fas fa-users"></i><span>Users</span>
-        </a>
-        <a href="manage-destinations.php" class="admin-menu-item <?php echo basename($_SERVER['PHP_SELF']) == 'manage-destinations.php' ? 'active' : ''; ?>">
+            <i class="fas fa-chevron-down submenu-arrow"></i>
+            <div class="admin-submenu">
+                <a href="manage-users.php" class="active">Show Users</a>
+                <a href="add-user.php">Add User</a>
+            </div>
+        </div>
+
+        <!-- Destinations -->
+        <div class="admin-menu-item has-submenu">
             <i class="fas fa-map-marker-alt"></i><span>Destinations</span>
-        </a>
-        <a href="manage-hotels.php" class="admin-menu-item <?php echo basename($_SERVER['PHP_SELF']) == 'manage-hotels.php' ? 'active' : ''; ?>">
+            <i class="fas fa-chevron-down submenu-arrow"></i>
+            <div class="admin-submenu">
+                <a href="manage-destinations.php">Show Destinations</a>
+                <a href="add-destination.php">Add Destination</a>
+            </div>
+        </div>
+
+        <!-- Hotels -->
+        <div class="admin-menu-item has-submenu">
             <i class="fas fa-hotel"></i><span>Hotels</span>
-        </a>
-        <a href="manage-rooms.php" class="admin-menu-item <?php echo basename($_SERVER['PHP_SELF']) == 'manage-rooms.php' ? 'active' : ''; ?>">
+            <i class="fas fa-chevron-down submenu-arrow"></i>
+            <div class="admin-submenu">
+                <a href="manage-hotels.php">Show Hotels</a>
+                <a href="add-hotel.php">Add Hotel</a>
+            </div>
+        </div>
+
+        <!-- Rooms -->
+        <div class="admin-menu-item has-submenu">
             <i class="fas fa-bed"></i><span>Rooms</span>
-        </a>
-        <a href="manage-bookings.php" class="admin-menu-item <?php echo basename($_SERVER['PHP_SELF']) == 'manage-bookings.php' ? 'active' : ''; ?>">
+            <i class="fas fa-chevron-down submenu-arrow"></i>
+            <div class="admin-submenu">
+                <a href="manage-rooms.php">Show Rooms</a>
+                <a href="add-room.php">Add Room</a>
+            </div>
+        </div>
+
+        <!-- Bookings -->
+        <div class="admin-menu-item has-submenu">
             <i class="fas fa-calendar-check"></i><span>Bookings</span>
-        </a>
-        <a href="manage-payments.php" class="admin-menu-item <?php echo basename($_SERVER['PHP_SELF']) == 'manage-payments.php' ? 'active' : ''; ?>">
+            <i class="fas fa-chevron-down submenu-arrow"></i>
+            <div class="admin-submenu">
+                <a href="manage-bookings.php">Show Bookings</a>
+                <a href="add-booking.php">Add Booking</a>
+            </div>
+        </div>
+
+        <!-- Payments -->
+        <div class="admin-menu-item has-submenu">
             <i class="fas fa-credit-card"></i><span>Payments</span>
-        </a>
-        <a href="manage-reviews.php" class="admin-menu-item <?php echo basename($_SERVER['PHP_SELF']) == 'manage-reviews.php' ? 'active' : ''; ?>">
+            <i class="fas fa-chevron-down submenu-arrow"></i>
+            <div class="admin-submenu">
+                <a href="manage-payments.php">Show Payments</a>
+                <a href="add-payment.php">Add Payment</a>
+            </div>
+        </div>
+
+        <!-- Reviews -->
+        <div class="admin-menu-item has-submenu">
             <i class="fas fa-star"></i><span>Reviews</span>
-        </a>
-        <a href="manage-gallery.php" class="admin-menu-item <?php echo basename($_SERVER['PHP_SELF']) == 'manage-gallery.php' ? 'active' : ''; ?>">
+            <i class="fas fa-chevron-down submenu-arrow"></i>
+            <div class="admin-submenu">
+                <a href="manage-reviews.php">Show Reviews</a>
+                <a href="add-review.php">Add Review</a>
+            </div>
+        </div>
+
+        <!-- Gallery -->
+        <div class="admin-menu-item has-submenu">
             <i class="fas fa-images"></i><span>Gallery</span>
-        </a>
-        <a href="manage-transport.php" class="admin-menu-item <?php echo basename($_SERVER['PHP_SELF']) == 'manage-transport.php' ? 'active' : ''; ?>">
+            <i class="fas fa-chevron-down submenu-arrow"></i>
+            <div class="admin-submenu">
+                <a href="manage-gallery.php">Show Gallery</a>
+                <a href="add-gallery.php">Add Image</a>
+            </div>
+        </div>
+
+        <!-- Transport -->
+        <div class="admin-menu-item has-submenu">
             <i class="fas fa-bus"></i><span>Transport</span>
-        </a>
-        <a href="manage-blogs.php" class="admin-menu-item <?php echo basename($_SERVER['PHP_SELF']) == 'manage-blogs.php' ? 'active' : ''; ?>">
+            <i class="fas fa-chevron-down submenu-arrow"></i>
+            <div class="admin-submenu">
+                <a href="manage-transport.php">Show Transport</a>
+                <a href="add-transport.php">Add Transport</a>
+            </div>
+        </div>
+
+        <!-- Blogs -->
+        <div class="admin-menu-item has-submenu">
             <i class="fas fa-blog"></i><span>Blogs</span>
-        </a>
-        <a href="settings.php" class="admin-menu-item <?php echo basename($_SERVER['PHP_SELF']) == 'settings.php' ? 'active' : ''; ?>">
+            <i class="fas fa-chevron-down submenu-arrow"></i>
+            <div class="admin-submenu">
+                <a href="manage-blogs.php">Show Blogs</a>
+                <a href="add-blog.php">Add Blog</a>
+            </div>
+        </div>
+
+        <!-- Settings -->
+        <a href="settings.php" class="admin-menu-item">
             <i class="fas fa-cog"></i><span>Settings</span>
         </a>
+
+        <!-- Logout -->
         <a href="logout.php" class="admin-menu-item">
             <i class="fas fa-sign-out-alt"></i><span>Logout</span>
         </a>
@@ -571,13 +817,12 @@ $adminName = $_SESSION['admin'];
                 <span></span>
                 <span></span>
                 <span></span>
-                <span></span>
             </div>
         </button>
-        <h1><?php echo isset($pageTitle) ? $pageTitle : "Admin Panel"; ?></h1>
+        <h1>Dashboard</h1>
         <div class="admin-user-info">
-            <div class="admin-user-avatar"><?php echo strtoupper(substr($adminName,0,1)); ?></div>
-            <span>Welcome, <?php echo $adminName; ?></span>
+            <div class="admin-user-avatar">A</div>
+            <span>Welcome, Admin</span>
             <a href="logout.php" class="admin-logout-btn">
                 <i class="fas fa-sign-out-alt"></i>
                 <span>Logout</span>
@@ -585,114 +830,145 @@ $adminName = $_SESSION['admin'];
         </div>
     </div>
 
-    <?php if(isset($breadcrumb)): ?>
     <div class="admin-breadcrumb">
         <a href="dashboard.php">Dashboard</a>
-        <?php if(is_array($breadcrumb)): ?>
-            <?php foreach($breadcrumb as $item): ?>
-                &raquo; 
-                <?php if(isset($item['url'])): ?>
-                    <a href="<?php echo $item['url']; ?>"><?php echo $item['title']; ?></a>
-                <?php else: ?>
-                    <span><?php echo $item['title']; ?></span>
-                <?php endif; ?>
-            <?php endforeach; ?>
-        <?php else: ?>
-            &raquo; <span><?php echo $breadcrumb; ?></span>
-        <?php endif; ?>
+        <span>Overview</span>
     </div>
-    <?php endif; ?>
 
-    <div class="admin-content-area">
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Admin header specific JavaScript - scoped to prevent conflicts
-    const adminSidebar = document.getElementById('adminSidebar');
-    const adminToggleSidebar = document.getElementById('adminToggleSidebar');
-    const adminMobileToggle = document.getElementById('adminMobileToggle');
-    const adminHamburger = document.getElementById('adminHamburger');
-    const adminMobileOverlay = document.getElementById('adminMobileOverlay');
-
-    // Desktop sidebar toggle
-    if (adminToggleSidebar) {
-        adminToggleSidebar.addEventListener('click', function() {
-            adminSidebar.classList.toggle('collapsed');
-            localStorage.setItem('adminSidebarCollapsed', adminSidebar.classList.contains('collapsed'));
+    document.addEventListener('DOMContentLoaded', function() {
+        // Admin header specific JavaScript - scoped to prevent conflicts
+        const adminSidebar = document.getElementById('adminSidebar');
+        const adminToggleSidebar = document.getElementById('adminToggleSidebar');
+        const adminMobileToggle = document.getElementById('adminMobileToggle');
+        const adminHamburger = document.getElementById('adminHamburger');
+        const adminMobileOverlay = document.getElementById('adminMobileOverlay');
+        
+        // Submenu toggle functionality
+        const submenuItems = document.querySelectorAll('.admin-menu-item.has-submenu');
+        submenuItems.forEach(item => {
+            // Only add click event if it's not a collapsed sidebar on desktop
+            if (window.innerWidth > 1024 || !adminSidebar.classList.contains('collapsed')) {
+                item.addEventListener('click', function(e) {
+                    // Don't toggle if clicking on a link inside the submenu
+                    if (e.target.tagName.toLowerCase() === 'a') return;
+                    
+                    // Close other open submenus
+                    submenuItems.forEach(otherItem => {
+                        if (otherItem !== item && otherItem.classList.contains('active')) {
+                            otherItem.classList.remove('active');
+                        }
+                    });
+                    
+                    // Toggle current submenu
+                    this.classList.toggle('active');
+                });
+            }
         });
-    }
 
-    // Mobile sidebar toggle
-    if (adminMobileToggle) {
-        adminMobileToggle.addEventListener('click', function(e) {
-            e.stopPropagation();
-            adminSidebar.classList.toggle('mobile-open');
-            adminHamburger.classList.toggle('active');
-            adminMobileOverlay.classList.toggle('active');
-            document.body.style.overflow = adminSidebar.classList.contains('mobile-open') ? 'hidden' : '';
+        // Desktop sidebar toggle
+        if (adminToggleSidebar) {
+            adminToggleSidebar.addEventListener('click', function() {
+                adminSidebar.classList.toggle('collapsed');
+                localStorage.setItem('adminSidebarCollapsed', adminSidebar.classList.contains('collapsed'));
+            });
+        }
+
+        // Mobile sidebar toggle
+        if (adminMobileToggle) {
+            adminMobileToggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                adminSidebar.classList.toggle('mobile-open');
+                adminHamburger.classList.toggle('active');
+                adminMobileOverlay.classList.toggle('active');
+                document.body.style.overflow = adminSidebar.classList.contains('mobile-open') ? 'hidden' : '';
+            });
+        }
+
+        // Close mobile menu when clicking overlay
+        if (adminMobileOverlay) {
+            adminMobileOverlay.addEventListener('click', function() {
+                adminSidebar.classList.remove('mobile-open');
+                adminHamburger.classList.remove('active');
+                adminMobileOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        }
+
+        // Close mobile menu when clicking menu item (for links)
+        const adminMenuLinks = document.querySelectorAll('.admin-menu-item[href]');
+        adminMenuLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                if (window.innerWidth <= 768) {
+                    adminSidebar.classList.remove('mobile-open');
+                    adminHamburger.classList.remove('active');
+                    adminMobileOverlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
         });
-    }
 
-    // Close mobile menu when clicking overlay
-    if (adminMobileOverlay) {
-        adminMobileOverlay.addEventListener('click', function() {
-            adminSidebar.classList.remove('mobile-open');
-            adminHamburger.classList.remove('active');
-            adminMobileOverlay.classList.remove('active');
-            document.body.style.overflow = '';
+        // Restore sidebar state on desktop
+        const adminSidebarCollapsed = localStorage.getItem('adminSidebarCollapsed');
+        if (adminSidebarCollapsed === 'true' && window.innerWidth > 768) {
+            adminSidebar.classList.add('collapsed');
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                // Desktop view - close mobile menu
+                adminSidebar.classList.remove('mobile-open');
+                adminHamburger.classList.remove('active');
+                adminMobileOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+                
+                // Restore collapsed state if it was saved
+                const adminSidebarCollapsed = localStorage.getItem('adminSidebarCollapsed');
+                if (adminSidebarCollapsed === 'true') {
+                    adminSidebar.classList.add('collapsed');
+                } else {
+                    adminSidebar.classList.remove('collapsed');
+                }
+            } else {
+                // Mobile view - remove collapsed class
+                adminSidebar.classList.remove('collapsed');
+            }
+            
+            // Close all submenus on resize
+            submenuItems.forEach(item => {
+                item.classList.remove('active');
+            });
         });
-    }
 
-    // Close mobile menu when clicking menu item
-    const adminMenuItems = document.querySelectorAll('.admin-menu-item');
-    adminMenuItems.forEach(item => {
-        item.addEventListener('click', function() {
-            if (window.innerWidth <= 768) {
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(e) {
+            if (window.innerWidth <= 768 && 
+                adminSidebar.classList.contains('mobile-open') &&
+                !adminSidebar.contains(e.target) && 
+                !adminMobileToggle.contains(e.target)) {
                 adminSidebar.classList.remove('mobile-open');
                 adminHamburger.classList.remove('active');
                 adminMobileOverlay.classList.remove('active');
                 document.body.style.overflow = '';
             }
         });
-    });
 
-    // Restore sidebar state on desktop
-    const adminSidebarCollapsed = localStorage.getItem('adminSidebarCollapsed');
-    if (adminSidebarCollapsed === 'true' && window.innerWidth > 768) {
-        adminSidebar.classList.add('collapsed');
-    }
-
-    // Handle window resize
-    window.addEventListener('resize', function() {
-        if (window.innerWidth > 768) {
-            // Desktop view
-            adminSidebar.classList.remove('mobile-open');
-            adminHamburger.classList.remove('active');
-            adminMobileOverlay.classList.remove('active');
-            document.body.style.overflow = '';
-            
-            // Restore collapsed state if it was saved
-            const adminSidebarCollapsed = localStorage.getItem('adminSidebarCollapsed');
-            if (adminSidebarCollapsed === 'true') {
-                adminSidebar.classList.add('collapsed');
-            }
-        } else {
-            // Mobile view - remove collapsed class
-            adminSidebar.classList.remove('collapsed');
+        // Add hover effect for submenus in collapsed sidebar on desktop
+        if (window.innerWidth > 1024) {
+            const collapsedSubmenuItems = document.querySelectorAll('.admin-sidebar.collapsed .admin-menu-item.has-submenu');
+            collapsedSubmenuItems.forEach(item => {
+                item.addEventListener('mouseenter', function() {
+                    this.classList.add('active');
+                });
+                
+                item.addEventListener('mouseleave', function() {
+                    this.classList.remove('active');
+                });
+            });
         }
     });
-
-    // Close mobile menu when clicking outside
-    document.addEventListener('click', function(e) {
-        if (window.innerWidth <= 768 && 
-            adminSidebar.classList.contains('mobile-open') &&
-            !adminSidebar.contains(e.target) && 
-            !adminMobileToggle.contains(e.target)) {
-            adminSidebar.classList.remove('mobile-open');
-            adminHamburger.classList.remove('active');
-            adminMobileOverlay.classList.remove('active');
-            document.body.style.overflow = '';
-        }
-    });
-});
 </script>
+</body>
+</html>
